@@ -2,14 +2,32 @@
 
 A full-stack fitness tracking web application with multiple goals, daily check-ins, streak tracking, scheduled future goals, and email verification.
 
+**Live Demo:** [Coming Soon]
+
 ---
 
 ## 🗂️ Project Structure
 
 ```
-fittrack/
-├── frontend/          ← React + TypeScript + Vite + Framer Motion
-├── backend/           ← Python + Flask + Supabase
+fittrack-lite/
+├── frontend/                    ← React + TypeScript + Vite + Framer Motion
+│   ├── src/
+│   │   ├── components/          ← AppLayout
+│   │   ├── hooks/               ← useAuth (Supabase auth context)
+│   │   ├── lib/                 ← api.ts (Supabase client), supabase.ts
+│   │   ├── pages/               ← Landing, Login, Signup, Dashboard, Goals, Checkin, Profile
+│   │   ├── index.css            ← Premium dark theme
+│   │   └── main.tsx             ← React Router setup
+│   ├── package.json
+│   ├── vite.config.ts
+│   └── tsconfig.json
+├── backend/                     ← Python + Flask (optional, not used in production)
+│   ├── routes/                  ← Auth, Goals, Logs, Profile routes
+│   ├── app.py
+│   ├── config.py
+│   ├── requirements.txt
+│   └── supabase_schema.sql      ← Database schema
+├── .gitignore
 └── README.md
 ```
 
@@ -19,21 +37,28 @@ fittrack/
 
 | Layer | Tech |
 |---|---|
-| Frontend | React 18, TypeScript, Vite, Framer Motion |
-| Backend | Python 3.11+, Flask, Flask-CORS |
-| Database | Supabase (PostgreSQL) |
-| Auth | Supabase Auth (email verification built-in) |
-| Deployment | Render / Railway |
+| **Frontend** | React 18, TypeScript, Vite, Framer Motion, React Router |
+| **Backend** | Supabase (PostgreSQL) + Supabase Auth |
+| **API** | Supabase JS Client (direct from browser) |
+| **Styling** | Premium dark theme with glassmorphism |
+| **Deployment** | Vercel / Netlify (frontend), Supabase (database) |
 
 ---
 
-## 🚀 STEP 1 — Create Supabase Project
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 18+
+- Supabase account (free tier works)
+- Git
+
+### 1️⃣ Create Supabase Project
 
 1. Go to **https://supabase.com** → Sign up → New Project
 2. Note down:
    - **Project URL** → `https://xxxx.supabase.co`
-   - **anon/public key** → from Settings > API
-   - **service_role key** → from Settings > API (keep secret!)
+   - **Anon Key** → from Settings > API
+   - **Service Role Key** → from Settings > API (keep secret!)
 
 3. Go to **SQL Editor** in Supabase dashboard
 4. Open `backend/supabase_schema.sql` and **run the entire file**
@@ -45,7 +70,35 @@ fittrack/
 
 ---
 
-## 🔧 STEP 2 — Backend Setup
+### 2️⃣ Frontend Setup
+
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Create .env file
+cat > .env << EOF
+VITE_SUPABASE_URL=https://xxxx.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key-here
+VITE_APP_NAME=FitTrack Lite
+EOF
+
+# Run development server
+npm run dev
+# → Frontend running at http://localhost:5173
+
+# Build for production
+npm run build
+# → Output in dist/
+```
+
+---
+
+### 3️⃣ Backend Setup (Optional - Not Used in Production)
+
+The backend is included for reference but **not required** for the production app. The frontend calls Supabase directly.
 
 ```bash
 cd backend
@@ -59,138 +112,256 @@ venv\Scripts\activate           # Windows
 pip install -r requirements.txt
 
 # Configure environment
-cp .env .env.local
-# Edit .env and fill in your Supabase credentials:
-#   SUPABASE_URL=https://xxxx.supabase.co
-#   SUPABASE_ANON_KEY=your-anon-key
-#   SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-#   FLASK_SECRET_KEY=any-long-random-string
-#   JWT_SECRET_KEY=another-long-random-string
-#   FRONTEND_URL=http://localhost:5173
+cat > .env << EOF
+SUPABASE_URL=https://xxxx.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+FLASK_ENV=development
+FLASK_DEBUG=1
+FLASK_SECRET_KEY=your-secret-key
+JWT_SECRET_KEY=your-jwt-secret
+FRONTEND_URL=http://localhost:5173
+EOF
 
-# Run backend
+# Run backend (for development/testing only)
 python app.py
 # → Backend running at http://localhost:5000
 ```
 
 ---
 
-## 🎨 STEP 3 — Frontend Setup
+## 🌐 Frontend Pages
 
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Configure environment
-# Edit .env and fill in:
-#   VITE_API_URL=http://localhost:5000
-#   VITE_SUPABASE_URL=https://xxxx.supabase.co
-#   VITE_SUPABASE_ANON_KEY=your-anon-key
-
-# Run frontend
-npm run dev
-# → Frontend running at http://localhost:5173
-```
-
----
-
-## 🌐 API Routes
-
-| Method | Route | Auth | Description |
+| Page | Route | Auth | Description |
 |---|---|---|---|
-| POST | /api/auth/signup | ❌ | Register new user |
-| POST | /api/auth/login | ❌ | Login, get JWT |
-| POST | /api/auth/logout | ✅ | Logout |
-| GET | /api/auth/me | ✅ | Get current user |
-| POST | /api/auth/resend-verification | ❌ | Resend verification email |
-| POST | /api/auth/refresh | ❌ | Refresh JWT token |
-| GET | /api/goals/ | ✅ | Get all goals with stats |
-| POST | /api/goals/ | ✅ | Create a new goal |
-| PUT | /api/goals/:id | ✅ | Update a goal |
-| DELETE | /api/goals/:id | ✅ | Delete goal + logs |
-| GET | /api/goals/:id/stats | ✅ | Detailed goal stats |
-| GET | /api/logs/ | ✅ | Get logs (filterable) |
-| POST | /api/logs/ | ✅ | Save/update a check-in |
-| DELETE | /api/logs/:id | ✅ | Delete a log entry |
-| GET | /api/logs/today | ✅ | Today's logs |
-| GET | /api/profile/ | ✅ | Full profile + all stats |
-| PUT | /api/profile/ | ✅ | Update name |
-| DELETE | /api/profile/ | ✅ | Delete account |
+| Landing | `/` | ❌ | Hero page with animations |
+| Login | `/login` | ❌ | Email + password login |
+| Signup | `/signup` | ❌ | Register new account |
+| Dashboard | `/dashboard` | ✅ | Overview of all goals |
+| Goals | `/goals` | ✅ | Create, edit, delete goals |
+| Check-in | `/checkin` | ✅ | Log daily activity |
+| Profile | `/profile` | ✅ | Account settings + stats |
 
 ---
 
 ## 🗄️ Database Schema
 
 ### profiles
-| Column | Type | Notes |
-|---|---|---|
-| id | UUID | FK → auth.users |
-| name | TEXT | |
-| email | TEXT | UNIQUE |
-| created_at | TIMESTAMPTZ | |
+```sql
+id (UUID) → auth.users
+name (TEXT)
+email (TEXT, UNIQUE)
+created_at (TIMESTAMPTZ)
+```
 
 ### goals
-| Column | Type | Notes |
-|---|---|---|
-| id | UUID | PK |
-| user_id | UUID | FK → auth.users |
-| title | TEXT | |
-| duration_days | INTEGER | > 0 |
-| start_date | DATE | Can be future date |
-| category | TEXT | Enum |
-| color | TEXT | Enum |
-| notes | TEXT | |
-| created_at | TIMESTAMPTZ | |
+```sql
+id (UUID, PK)
+user_id (UUID) → auth.users
+title (TEXT)
+duration_days (INTEGER)
+start_date (DATE)
+category (TEXT)
+color (TEXT)
+notes (TEXT)
+created_at (TIMESTAMPTZ)
+```
 
 ### daily_logs
-| Column | Type | Notes |
-|---|---|---|
-| id | UUID | PK |
-| user_id | UUID | FK → auth.users |
-| goal_id | UUID | FK → goals |
-| log_date | DATE | |
-| status | TEXT | 'completed' or 'missed' |
-| notes | TEXT | |
-| created_at | TIMESTAMPTZ | |
-| **UNIQUE** | **(user_id, goal_id, log_date)** | ✅ One log per goal per day |
+```sql
+id (UUID, PK)
+user_id (UUID) → auth.users
+goal_id (UUID) → goals
+log_date (DATE)
+status (TEXT: 'completed' | 'missed')
+notes (TEXT)
+created_at (TIMESTAMPTZ)
+UNIQUE(user_id, goal_id, log_date) ← One log per goal per day
+```
 
 ---
 
 ## 🚀 Deployment
 
-### Deploy Backend on Render:
-1. Push code to GitHub
-2. New Web Service → connect repo → set Root Directory to `backend`
-3. Build command: `pip install -r requirements.txt`
-4. Start command: `gunicorn "app:create_app()" --bind 0.0.0.0:$PORT`
-5. Add all `.env` variables as Environment Variables in Render dashboard
+### Deploy Frontend on Vercel
 
-### Deploy Frontend on Vercel / Netlify:
-1. Push code to GitHub
-2. Import project → set Root Directory to `frontend`
-3. Build command: `npm run build`
-4. Publish directory: `dist`
-5. Add `.env` variables in dashboard
+```bash
+# 1. Push to GitHub
+git push origin main
+
+# 2. Go to https://vercel.com → Import Project
+# 3. Select your GitHub repo
+# 4. Configure:
+#    - Root Directory: frontend
+#    - Build Command: npm run build
+#    - Output Directory: dist
+# 5. Add Environment Variables:
+#    - VITE_SUPABASE_URL
+#    - VITE_SUPABASE_ANON_KEY
+# 6. Deploy!
+```
+
+### Deploy Frontend on Netlify
+
+```bash
+# 1. Push to GitHub
+git push origin main
+
+# 2. Go to https://netlify.com → New site from Git
+# 3. Select your GitHub repo
+# 4. Configure:
+#    - Base directory: frontend
+#    - Build command: npm run build
+#    - Publish directory: dist
+# 5. Add Environment Variables:
+#    - VITE_SUPABASE_URL
+#    - VITE_SUPABASE_ANON_KEY
+# 6. Deploy!
+```
+
+### Deploy Backend on Render (Optional)
+
+```bash
+# 1. Push to GitHub
+git push origin main
+
+# 2. Go to https://render.com → New Web Service
+# 3. Connect your GitHub repo
+# 4. Configure:
+#    - Root Directory: backend
+#    - Build Command: pip install -r requirements.txt
+#    - Start Command: gunicorn "app:create_app()" --bind 0.0.0.0:$PORT
+# 5. Add Environment Variables (all from .env)
+# 6. Deploy!
+```
 
 ---
 
 ## ✅ Features
 
-- 🔐 Email verification via Supabase Auth
-- 🎯 **Multiple goals** — no artificial limit
+- 🔐 **Email verification** via Supabase Auth
+- 🎯 **Multiple goals** — unlimited goals per user
 - ⏰ **Scheduled future goals** — set start dates ahead of time
-- 📅 **One check-in per goal per day** — enforced at DB level (UNIQUE constraint)
-- 🔥 Streak tracking per goal
-- 📊 Progress bars, completion rates, insights
-- 👤 Profile with per-goal breakdown
-- 🌊 Animated landing page (Framer Motion floating paths)
+- 📅 **One check-in per goal per day** — enforced at DB level
+- 🔥 **Streak tracking** per goal
+- 📊 **Progress bars** and completion rates
+- 👤 **Profile dashboard** with per-goal breakdown
+- 🌊 **Animated landing page** with Framer Motion
+- 🎨 **Premium dark theme** with glassmorphism effects
+- 📱 **Responsive design** — works on mobile, tablet, desktop
 
 ---
 
-## 🔑 Key Notes
+## 🔑 Key Architecture Decisions
 
-- The `SUPABASE_SERVICE_ROLE_KEY` is used **server-side only** (backend). Never expose it to the frontend.
-- The UNIQUE constraint `(user_id, goal_id, log_date)` in `daily_logs` prevents duplicate check-ins at the database level — not just in code.
-- Goals with `start_date > today` are automatically treated as "upcoming" and cannot be checked in until their start date arrives.
+### Frontend-Only Supabase Client
+- The frontend calls Supabase directly using the **Supabase JS client**
+- No Flask backend needed for production
+- Faster, simpler, fewer moving parts
+- Supabase handles auth, database, and RLS policies
+
+### Row-Level Security (RLS)
+- All tables have RLS policies enabled
+- Users can only see/modify their own data
+- Enforced at the database level, not in code
+
+### One Log Per Goal Per Day
+- `UNIQUE(user_id, goal_id, log_date)` constraint in `daily_logs`
+- Prevents duplicate check-ins at the database level
+- Upsert operation updates existing log if present
+
+### Timezone-Aware Date Calculations
+- All dates stored as `DATE` type (no timezone)
+- Frontend parses dates with explicit time: `new Date(dateStr + 'T00:00:00')`
+- Prevents timezone offset issues
+
+---
+
+## 🛠️ Development
+
+### Build Frontend
+```bash
+cd frontend
+npm run build
+```
+
+### Run Frontend Dev Server
+```bash
+cd frontend
+npm run dev
+```
+
+### Run Backend (Optional)
+```bash
+cd backend
+python app.py
+```
+
+### Type Checking
+```bash
+cd frontend
+npx tsc --noEmit
+```
+
+---
+
+## 📝 Environment Variables
+
+### Frontend (.env)
+```
+VITE_SUPABASE_URL=https://xxxx.supabase.co
+VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_APP_NAME=FitTrack Lite
+```
+
+### Backend (.env) - Optional
+```
+SUPABASE_URL=https://xxxx.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+FLASK_ENV=development
+FLASK_DEBUG=1
+FLASK_SECRET_KEY=your-secret
+JWT_SECRET_KEY=your-jwt-secret
+FRONTEND_URL=http://localhost:5173
+```
+
+---
+
+## 🐛 Troubleshooting
+
+### "Cannot read properties of undefined (reading 'pct')"
+- This happens when a goal is "upcoming" and stats haven't been computed yet
+- **Fix:** Use nullish coalescing: `const s = g.stats ?? { completed: 0, missed: 0, pct: 0, streak: 0, days_left: 0, tracked_days: 0 }`
+
+### "406 RLS error" on Profile page
+- This happens when querying a profile that doesn't exist yet
+- **Fix:** Use `.maybeSingle()` instead of `.single()` and auto-create profile if missing
+
+### "No active goals" on Check-in page
+- This happens when `goalStatus()` returns 'finished' incorrectly
+- **Fix:** Parse dates with explicit time: `new Date(dateStr + 'T00:00:00')`
+
+### Supabase blocks localhost requests
+- Supabase blocks server-side requests from localhost
+- **Solution:** Use frontend-only Supabase JS client (already implemented)
+
+---
+
+## 📄 License
+
+MIT
+
+---
+
+## 👤 Author
+
+Created with ❤️ for fitness enthusiasts
+
+---
+
+## 🤝 Contributing
+
+Contributions welcome! Please open an issue or submit a PR.
+
+
